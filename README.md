@@ -128,14 +128,14 @@ La suite couvre :
 - le démarrage du contexte Spring complet ;
 - la génération du contrat OpenAPI et l'accès à Swagger UI.
 
-## Limites identifiées et suite en production
+## Problèmes identifiés mais non traités
 
-Le périmètre de l'exercice ne comprend ni persistance ni authentification : cette API ne manipule aucune donnée privée et ne propose aucune écriture. Pour un service exploité en production, je compléterais selon les objectifs de disponibilité et de charge :
+Dans le temps imparti pour cet exercice, j'ai identifié plusieurs sujets qui mériteraient d'être traités avant une mise en production :
 
-- cache court aligné sur la fréquence de mise à jour de la source, avec dernière valeur valide en repli ;
-- circuit breaker et métriques sur latence, erreurs et fraîcheur des données ;
-- limite explicite de taille de réponse amont au niveau du client HTTP ;
-- tests de contrat exécutés régulièrement contre chaque fournisseur ;
-- image OCI, pipeline CI, analyse de dépendances et déploiement redondé.
+- **Dépendance à la source externe** : si le fournisseur est indisponible ou trop lent, la recherche échoue après expiration des délais configurés. Un cache court, conservant la dernière valeur valide, ainsi qu'un circuit breaker permettraient de maintenir un service dégradé.
+- **Fraîcheur des données** : l'API restitue les informations disponibles chez le fournisseur sans mesurer leur ancienneté. Une métrique de fraîcheur et une alerte associée permettraient de détecter une source qui ne se met plus à jour.
+- **Volume de la réponse amont** : le client HTTP ne fixe pas encore de limite explicite à la taille de la réponse. Cette limite devrait être ajoutée pour maîtriser l'utilisation de la mémoire face à une réponse anormalement volumineuse.
+- **Évolution du contrat fournisseur** : les tests couvrent le format actuellement connu, mais une modification du schéma distant peut casser l'adaptateur. Des tests de contrat réguliers contre chaque fournisseur réduiraient ce risque.
+- **Exploitation du service** : la conteneurisation, le pipeline CI, l'analyse des dépendances, les métriques de latence et d'erreur ainsi qu'un déploiement redondé restent à mettre en place selon les objectifs de disponibilité et de charge.
 
-Je n'ai pas ajouté ces éléments afin de garder un service simple et proportionné au besoin actuel. Le port fournisseur constitue le point d'extension nécessaire sans introduire une abstraction pour chaque classe.
+La persistance et l'authentification ne sont pas nécessaires dans le périmètre actuel, car le service expose uniquement des données publiques en lecture. Ces améliorations n'ont pas été implémentées afin de garder une solution proportionnée au besoin et au temps imparti. Le port `ParkingProvider` constitue le point d'extension prévu pour ajouter une ville ou un fournisseur sans complexifier prématurément le reste de l'application.
